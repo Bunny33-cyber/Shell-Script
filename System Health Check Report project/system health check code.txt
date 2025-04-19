@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# System Health Check Script
+# Checks CPU, Memory, Disk, Services, Network status
+
+# === Configuration ===
+SERVICES=("nginx" "mysql" "docker")  # List services to check
+LOG_FILE="/var/log/health-check.log"
+
+# === Colors ===
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+# === Functions ===
+
+print_section() {
+    echo -e "\n${YELLOW}===== $1 =====${RESET}"
+}
+
+check_cpu() {
+    print_section "CPU LOAD"
+    uptime
+}
+
+check_memory() {
+    print_section "MEMORY USAGE"
+    free -h
+}
+
+check_disk() {
+    print_section "DISK USAGE"
+    df -h /
+}
+
+check_services() {
+    print_section "SERVICES STATUS"
+    for svc in "${SERVICES[@]}"; do
+        if systemctl is-active --quiet "$svc"; then
+            echo -e "${GREEN}$svc is running${RESET}"
+        else
+            echo -e "${RED}$svc is NOT running${RESET}"
+        fi
+    done
+}
+
+check_network() {
+    print_section "NETWORK STATUS"
+    ip -brief address
+    echo ""
+    ping -c 2 8.8.8.8 &> /dev/null && echo -e "${GREEN}Internet: OK${RESET}" || echo -e "${RED}Internet: DOWN${RESET}"
+}
+
+log_output() {
+    {
+        echo "========== System Health Check @ $(date) =========="
+        check_cpu
+        check_memory
+        check_disk
+        check_services
+        check_network
+        echo "===================================================="
+    } | tee -a "$LOG_FILE"
+}
+
+# === Run All Checks ===
+log_output

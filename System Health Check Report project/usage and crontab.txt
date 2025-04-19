@@ -1,0 +1,12 @@
+How to Use:
+
+1. Save as health-check.sh
+2. Make it executable:
+	chmod +x health-check.sh
+3. Run it:
+	./health-check.sh
+
+------------------------------------------------------------
+Add to Crontab:
+
+0 8 * * * /path/to/health-check.sh >> /var/log/health-check.log 2>&1

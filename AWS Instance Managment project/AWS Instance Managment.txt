@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# AWS EC2 Instance Management Script
+# Usage: ./ec2-manager.sh start|stop [instance-id1 instance-id2 ...]
+
+# Configuration (edit this with your instance IDs or leave empty to use scheduled logic)
+DEFAULT_INSTANCE_IDS=("i-0123456789abcdef0" "i-0abcdef1234567890")
+
+# Scheduled instance IDs (example: stop every night, start every morning)
+SCHEDULED_INSTANCE_IDS=("i-0123456789abcdef0")
+
+# Region (customize)
+AWS_REGION="us-east-1"
+
+# Time-based schedule control (24-hour format)
+CURRENT_HOUR=$(date +%H)
+START_HOUR=08  # 8 AM
+STOP_HOUR=20   # 8 PM
+
+ACTION=$1
+shift
+INSTANCE_IDS=("$@")
+
+# Fallback to default list if none provided
+if [ ${#INSTANCE_IDS[@]} -eq 0 ]; then
+    INSTANCE_IDS=("${DEFAULT_INSTANCE_IDS[@]}")
+fi
+
+function start_instances() {
+    echo "Starting instances: ${INSTANCE_IDS[*]}"
+    aws ec2 start-instances --instance-ids "${INSTANCE_IDS[@]}" --region "$AWS_REGION"
+}
+
+function stop_instances() {
+    echo "Stopping instances: ${INSTANCE_IDS[*]}"
+    aws ec2 stop-instances --instance-ids "${INSTANCE_IDS[@]}" --region "$AWS_REGION"
+}
+
+function scheduled_check() {
+    if [ "$CURRENT_HOUR" -eq "$START_HOUR" ]; then
+        echo "Scheduled start triggered."
+        INSTANCE_IDS=("${SCHEDULED_INSTANCE_IDS[@]}")
+        start_instances
+    elif [ "$CURRENT_HOUR" -eq "$STOP_HOUR" ]; then
+        echo "Scheduled stop triggered."
+        INSTANCE_IDS=("${SCHEDULED_INSTANCE_IDS[@]}")
+        stop_instances
+    else
+        echo "No scheduled action required at this time ($CURRENT_HOUR:00)."
+    fi
+}
+
+case "$ACTION" in
+    start)
+        start_instances
+        ;;
+    stop)
+        stop_instances
+        ;;
+    scheduled)
+        scheduled_check
+        ;;
+    *)
+        echo "Usage: $0 start|stop|scheduled [instance-id1 instance-id2 ...]"
+        exit 1
+        ;;
+esac

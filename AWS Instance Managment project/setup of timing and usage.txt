@@ -1,0 +1,13 @@
+Setup as Cron Job (optional for scheduled mode):
+
+
+0 * * * * /path/to/ec2-manager.sh scheduled >> /var/log/ec2-manager.log 2>&1
+
+
+-----------------------------------------------------------
+Usage:
+
+
+./ec2-manager.sh start i-0123456789abcdef0
+./ec2-manager.sh stop
+./ec2-manager.sh scheduled
